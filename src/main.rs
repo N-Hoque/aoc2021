@@ -1,4 +1,4 @@
-use aoc2021::day_1;
+use aoc2021::{day_1, day_2};
 
 fn main() {
     println!("Day 1!");
