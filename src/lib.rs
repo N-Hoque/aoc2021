@@ -1,4 +1,5 @@
 pub mod day_1;
+pub mod day_2;
 
 use std::{
     fmt::Debug,
@@ -7,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-fn read_lines<P: AsRef<Path>>(filename: P) -> Vec<String> {
+pub fn read_lines<P: AsRef<Path>>(filename: P) -> Vec<String> {
     let file = std::fs::File::open(filename).expect("Unable to open file");
     let buffer = BufReader::new(file);
     buffer
