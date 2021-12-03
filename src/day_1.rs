@@ -1,16 +1,7 @@
-use crate::read_lines;
-
-fn load_data() -> Vec<u64> {
-    let data = read_lines("res/day_1.txt");
-    let data = data
-        .iter()
-        .map(|s| s.parse::<u64>().expect("Could not parse value"))
-        .collect::<Vec<_>>();
-    data
-}
+use crate::read_file;
 
 pub fn part_1() {
-    let data = load_data();
+    let data = read_file::<u64, _>("res/day_1.txt");
 
     let mut depth_counter = 0;
     for i in 1..data.len() {
@@ -32,7 +23,7 @@ impl Window {
 }
 
 pub fn part_2() {
-    let data = load_data();
+    let data = read_file("res/day_1.txt");
 
     let mut windows = Vec::new();
 
