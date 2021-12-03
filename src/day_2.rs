@@ -1,6 +1,7 @@
+use itertools::Itertools;
+
 use crate::read_lines;
 
-#[derive(Debug, Clone, Copy)]
 enum Command {
     Forward(u64),
     Down(u64),
@@ -13,7 +14,7 @@ impl Command {
             ("forward", Ok(x)) => Self::Forward(x),
             ("down", Ok(x)) => Self::Down(x),
             ("up", Ok(x)) => Self::Up(x),
-            _ => panic!("This cannot happen."),
+            _ => unreachable!(),
         }
     }
 }
@@ -30,7 +31,7 @@ impl Submarine {
         self.range * self.depth
     }
 
-    pub fn apply_command_as_movement(&mut self, command: Command) {
+    pub fn interpret_command_as_movement(&mut self, command: Command) {
         match command {
             Command::Forward(x) => self.range += x,
             Command::Down(x) => self.depth += x,
@@ -38,7 +39,7 @@ impl Submarine {
         }
     }
 
-    pub fn apply_command_as_aiming(&mut self, command: Command) {
+    pub fn interpret_command_as_aiming(&mut self, command: Command) {
         match command {
             Command::Forward(x) => {
                 self.range += x;
@@ -53,13 +54,15 @@ impl Submarine {
 fn parse_data() -> Vec<Command> {
     let data = read_lines("res/day_2.txt");
 
-    let mut commands = Vec::new();
-
-    for line in data {
-        let elements = line.split_whitespace().collect::<Vec<_>>();
-        let command = Command::new(elements[0], elements[1]);
-        commands.push(command);
-    }
+    let commands = data
+        .iter()
+        .map(|x| {
+            x.split_whitespace()
+                .collect_tuple::<(&str, &str)>()
+                .expect("Could not split line")
+        })
+        .map(|(name, value)| Command::new(name, value))
+        .collect();
 
     commands
 }
@@ -70,7 +73,7 @@ pub fn part_1() {
     let commands = parse_data();
 
     for command in commands {
-        submarine.apply_command_as_movement(command);
+        submarine.interpret_command_as_movement(command);
     }
 
     println!("{}", submarine.magnitude());
@@ -82,7 +85,7 @@ pub fn part_2() {
     let commands = parse_data();
 
     for command in commands {
-        submarine.apply_command_as_aiming(command);
+        submarine.interpret_command_as_aiming(command);
     }
 
     println!("{}", submarine.magnitude());
