@@ -22,6 +22,7 @@ impl Command {
 struct Submarine {
     range: u64,
     depth: u64,
+    aim: u64,
 }
 
 impl Submarine {
@@ -29,11 +30,22 @@ impl Submarine {
         self.range * self.depth
     }
 
-    pub fn run_command(&mut self, command: Command) {
+    pub fn apply_command_as_movement(&mut self, command: Command) {
         match command {
             Command::Forward(x) => self.range += x,
             Command::Down(x) => self.depth += x,
             Command::Up(x) => self.depth -= x,
+        }
+    }
+
+    pub fn apply_command_as_aiming(&mut self, command: Command) {
+        match command {
+            Command::Forward(x) => {
+                self.range += x;
+                self.depth += self.aim * x;
+            }
+            Command::Down(x) => self.aim += x,
+            Command::Up(x) => self.aim -= x,
         }
     }
 }
@@ -58,10 +70,20 @@ pub fn part_1() {
     let commands = parse_data();
 
     for command in commands {
-        submarine.run_command(command);
+        submarine.apply_command_as_movement(command);
     }
 
     println!("{}", submarine.magnitude());
 }
 
-pub fn part_2() {}
+pub fn part_2() {
+    let mut submarine = Submarine::default();
+
+    let commands = parse_data();
+
+    for command in commands {
+        submarine.apply_command_as_aiming(command);
+    }
+
+    println!("{}", submarine.magnitude());
+}
