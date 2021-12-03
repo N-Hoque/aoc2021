@@ -1,3 +1,5 @@
+pub mod day_1;
+
 use std::{
     io::{BufRead, BufReader},
     path::Path,
