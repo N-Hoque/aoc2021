@@ -76,7 +76,7 @@ pub fn part_1() {
         submarine.interpret_command_as_movement(command);
     }
 
-    println!("{}", submarine.magnitude());
+    println!("Part 1: {}", submarine.magnitude());
 }
 
 pub fn part_2() {
@@ -88,5 +88,5 @@ pub fn part_2() {
         submarine.interpret_command_as_aiming(command);
     }
 
-    println!("{}", submarine.magnitude());
+    println!("Part 2: {}", submarine.magnitude());
 }
