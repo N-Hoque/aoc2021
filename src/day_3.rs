@@ -20,18 +20,25 @@ pub fn part_1() {
 
     let bit_counter = create_bit_counter(&data);
 
-    let gamma = find_gamma_rating(bit_counter.clone());
+    let gamma = find_gamma_rating(&bit_counter);
 
-    let epsilon = find_epsilon_rating(bit_counter);
+    let epsilon = find_epsilon_rating(&bit_counter);
 
-    println!("{} x {} = {}", gamma, epsilon, gamma * epsilon);
+    println!(
+        "Part 1: {} ({:#0b}) x {} ({:#0b}) = {}",
+        gamma,
+        gamma,
+        epsilon,
+        epsilon,
+        gamma * epsilon
+    );
 }
 
-fn find_epsilon_rating(bit_counter: Vec<i64>) -> u64 {
+fn find_epsilon_rating(bit_counter: &[i64]) -> u64 {
     let mut epsilon = String::new();
 
     for frequency in bit_counter {
-        if frequency > 0 {
+        if frequency > &0 {
             epsilon += "0";
         } else {
             epsilon += "1";
@@ -41,11 +48,11 @@ fn find_epsilon_rating(bit_counter: Vec<i64>) -> u64 {
     u64::from_str_radix(&epsilon, 2).expect("Cannot convert to binary string")
 }
 
-fn find_gamma_rating(bit_counter: Vec<i64>) -> u64 {
+fn find_gamma_rating(bit_counter: &[i64]) -> u64 {
     let mut gamma = String::new();
 
     for frequency in bit_counter {
-        if frequency > 0 {
+        if frequency > &0 {
             gamma += "1";
         } else {
             gamma += "0";
@@ -65,8 +72,10 @@ pub fn part_2() {
     let co2_scrubber = find_co2_scrubber_rating(data, bit_length);
 
     println!(
-        "{} x {} = {}",
+        "Part 2: {} ({:#0b}) x {} ({:#0b}) = {}",
         oxygen_generator,
+        oxygen_generator,
+        co2_scrubber,
         co2_scrubber,
         oxygen_generator * co2_scrubber
     );
@@ -74,18 +83,17 @@ pub fn part_2() {
 
 fn find_co2_scrubber_rating(data: Vec<String>, bit_length: usize) -> u64 {
     let mut lsb_data = data;
+
     for idx in 0..bit_length {
         let bit_counter = create_bit_counter(&lsb_data);
         lsb_data = lsb_data
             .iter()
             .filter(|x| {
-                let char = x.chars().nth(idx).unwrap();
-
-                if bit_counter[idx] == 0 {
-                    char == '0'
-                } else {
-                    char == '0' && bit_counter[idx] > 0 || char == '1' && bit_counter[idx] < 0
-                }
+                matches!(
+                    (x.chars().nth(idx).unwrap(), bit_counter[idx].cmp(&0)),
+                    ('0', std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+                        | ('1', std::cmp::Ordering::Less)
+                )
             })
             .cloned()
             .collect();
@@ -105,13 +113,11 @@ fn find_oxygen_generator_rating(data: Vec<String>, bit_length: usize) -> u64 {
         msb_data = msb_data
             .iter()
             .filter(|x| {
-                let char = x.chars().nth(idx).unwrap();
-
-                if bit_counter[idx] == 0 {
-                    char == '1'
-                } else {
-                    char == '1' && bit_counter[idx] > 0 || char == '0' && bit_counter[idx] < 0
-                }
+                matches!(
+                    (x.chars().nth(idx).unwrap(), bit_counter[idx].cmp(&0)),
+                    ('1', std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+                        | ('0', std::cmp::Ordering::Less)
+                )
             })
             .cloned()
             .collect();
