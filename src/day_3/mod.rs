@@ -90,10 +90,10 @@ fn find_co2_scrubber_rating(data: Vec<String>, bit_length: usize) -> u64 {
             .iter()
             .filter(|x| {
                 matches!(
-                    (x.chars().nth(idx).unwrap(), bit_counter[idx].cmp(&0)),
-                    ('0', std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
-                        | ('1', std::cmp::Ordering::Less)
-                )
+                   (x.chars().nth(idx).unwrap(), bit_counter[idx].cmp(&0)),
+                   ('0', std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+                       | ('1', std::cmp::Ordering::Less)
+               )
             })
             .cloned()
             .collect();
@@ -114,10 +114,10 @@ fn find_oxygen_generator_rating(data: Vec<String>, bit_length: usize) -> u64 {
             .iter()
             .filter(|x| {
                 matches!(
-                    (x.chars().nth(idx).unwrap(), bit_counter[idx].cmp(&0)),
-                    ('1', std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
-                        | ('0', std::cmp::Ordering::Less)
-                )
+                   (x.chars().nth(idx).unwrap(), bit_counter[idx].cmp(&0)),
+                   ('1', std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+                       | ('0', std::cmp::Ordering::Less)
+               )
             })
             .cloned()
             .collect();

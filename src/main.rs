@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-use aoc2021::{day_1, day_2};
-=======
 use aoc2021::{day_1, day_2, day_3};
->>>>>>> 4b4ebc0... Added Day 3 to main.rs
 
 fn main() {
     println!("Day 1!");
