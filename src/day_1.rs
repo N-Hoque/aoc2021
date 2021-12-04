@@ -10,7 +10,7 @@ pub fn part_1() {
         }
     }
 
-    println!("{}", depth_counter);
+    println!("Part 1: {}", depth_counter);
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -41,5 +41,5 @@ pub fn part_2() {
         }
     }
 
-    println!("{}", depth_counter);
+    println!("Part 2: {}", depth_counter);
 }
