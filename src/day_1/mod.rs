@@ -36,16 +36,4 @@ pub fn part_2() -> u64 {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{part_1, part_2};
-
-    #[test]
-    fn test_part_1() {
-        assert_eq!(1624, part_1());
-    }
-
-    #[test]
-    fn test_part_2() {
-        assert_eq!(1653, part_2());
-    }
-}
+mod tests;
