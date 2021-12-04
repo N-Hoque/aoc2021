@@ -67,7 +67,7 @@ fn parse_data() -> Vec<Command> {
     commands
 }
 
-pub fn part_1() {
+pub fn part_1() -> u64 {
     let mut submarine = Submarine::default();
 
     let commands = parse_data();
@@ -77,9 +77,11 @@ pub fn part_1() {
     }
 
     println!("Part 1: {}", submarine.magnitude());
+
+    submarine.magnitude()
 }
 
-pub fn part_2() {
+pub fn part_2() -> u64 {
     let mut submarine = Submarine::default();
 
     let commands = parse_data();
@@ -89,4 +91,9 @@ pub fn part_2() {
     }
 
     println!("Part 2: {}", submarine.magnitude());
+
+    submarine.magnitude()
 }
+
+#[cfg(test)]
+mod tests;
