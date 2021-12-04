@@ -15,4 +15,9 @@ fn main() {
     day_3::part_1();
     day_3::part_2();
     println!();
+
+    println!("Day 4!");
+    day_4::part_1();
+    day_4::part_2();
+    println!();
 }
