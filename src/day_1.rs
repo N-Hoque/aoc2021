@@ -1,6 +1,6 @@
 use crate::read_file;
 
-pub fn part_1() {
+pub fn part_1() -> u64 {
     let data = read_file::<u64, _>("res/day_1.txt");
 
     let mut depth_counter = 0;
@@ -11,35 +11,41 @@ pub fn part_1() {
     }
 
     println!("Part 1: {}", depth_counter);
+
+    depth_counter
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Window(u64, u64, u64);
-
-impl Window {
-    pub fn sum(self) -> u64 {
-        self.0 + self.1 + self.2
-    }
-}
-
-pub fn part_2() {
-    let data = read_file("res/day_1.txt");
+pub fn part_2() -> u64 {
+    let data = read_file::<u64, _>("res/day_1.txt");
 
     let mut windows = Vec::new();
-
     for i in 1..data.len() - 1 {
-        let new_window = Window(data[i - 1], data[i], data[i + 1]);
-        windows.push(new_window);
+        windows.push(data[i - 1] + data[i] + data[i + 1]);
     }
 
-    let window_sizes = windows.iter().map(|w| w.sum()).collect::<Vec<_>>();
-
     let mut depth_counter = 0;
-    for i in 1..window_sizes.len() {
-        if window_sizes[i] > window_sizes[i - 1] {
+    for i in 1..windows.len() {
+        if windows[i] > windows[i - 1] {
             depth_counter += 1;
         }
     }
 
     println!("Part 2: {}", depth_counter);
+
+    depth_counter
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{part_1, part_2};
+
+    #[test]
+    fn test_part_1() {
+        assert_eq!(1624, part_1());
+    }
+
+    #[test]
+    fn test_part_2() {
+        assert_eq!(1653, part_2());
+    }
 }
