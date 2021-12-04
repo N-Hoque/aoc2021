@@ -11,8 +11,8 @@ enum BingoNumber {
 impl Display for BingoNumber {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            BingoNumber::NotFound(x) => write!(f, "{}", x),
-            BingoNumber::Found(x) => write!(f, "[{}]", x),
+            BingoNumber::NotFound(x) => write!(f, " {:02} ", x),
+            BingoNumber::Found(x) => write!(f, "[{:02}]", x),
         }
     }
 }
@@ -23,6 +23,7 @@ impl Default for BingoNumber {
     }
 }
 
+#[derive(Clone)]
 struct Board {
     data: Vec<Vec<BingoNumber>>,
 }
@@ -46,18 +47,6 @@ impl Board {
         }
 
         false
-    }
-
-    pub fn sum_marked(&self) -> u64 {
-        let mut sum = 0;
-        for row in self.data.iter() {
-            for number in row.iter() {
-                if let BingoNumber::Found(x) = number {
-                    sum += *x;
-                }
-            }
-        }
-        sum
     }
 
     pub fn sum_unmarked(&self) -> u64 {
@@ -101,14 +90,11 @@ impl Board {
 
         transpose
     }
-
-    pub fn transpose_mut(&mut self) {
-        self.data = self.transpose();
-    }
 }
 
 impl Display for Board {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let vertical_border = String::from("-----------------------------");
         let mut output = String::new();
 
         for row in self.data.iter() {
@@ -116,10 +102,11 @@ impl Display for Board {
             output += "\n"
         }
 
-        write!(f, "{}", output)
+        write!(f, "{}\n{}{}", vertical_border, output, vertical_border)
     }
 }
 
+#[derive(Clone)]
 struct Bingo {
     pool: Vec<u64>,
     boards: Vec<Board>,
@@ -175,26 +162,21 @@ impl Bingo {
         Self { pool, boards }
     }
 
-    pub fn play(&mut self) -> u64 {
-        for number in self.pool.iter() {
-            for (idx, board) in self.boards.iter_mut().enumerate() {
-                if board.find(*number) {
-                    println!("Board {} has {}!", idx, number);
-                }
-                if board.has_won() {
-                    println!("Board {} has won!", idx);
-                    println!(
-                        "{} x {} = {}",
-                        board.sum_unmarked(),
-                        number,
-                        board.sum_unmarked() * number
-                    );
-                    return board.sum_unmarked() * number;
-                }
-            }
-        }
+    pub fn count_boards(&self) -> usize {
+        self.boards.iter().len()
+    }
 
-        0
+    pub fn count_winning_boards(&self) -> usize {
+        self.boards.iter().filter(|b| b.has_won()).count()
+    }
+
+    pub fn find_last_board(&mut self) -> Option<Board> {
+        if self.count_winning_boards() != self.count_boards() - 1 {
+            None
+        } else {
+            self.boards.retain(|b| !b.has_won());
+            Some(self.boards[0].clone())
+        }
     }
 }
 
@@ -215,10 +197,62 @@ impl Display for Bingo {
 pub fn part_1() -> u64 {
     let mut bingo = Bingo::new();
 
-    bingo.play()
+    for number in bingo.pool.iter() {
+        for (idx, board) in bingo.boards.iter_mut().enumerate() {
+            board.find(*number);
+            if board.has_won() {
+                println!("Part 1:");
+                println!("Board {} has won!", idx);
+                println!("{}", board);
+                println!(
+                    "{} x {} = {}",
+                    board.sum_unmarked(),
+                    number,
+                    board.sum_unmarked() * number
+                );
+                return board.sum_unmarked() * number;
+            }
+        }
+    }
+
+    0
 }
 
 pub fn part_2() -> u64 {
+    let mut bingo = Bingo::new();
+
+    let total_boards = bingo.count_boards();
+
+    let mut final_board = Board { data: Vec::new() };
+
+    let mut final_index = 0;
+
+    for (jdx, number) in bingo.pool.iter().enumerate() {
+        for idx in 0..total_boards {
+            let current_board = &mut bingo.boards[idx as usize];
+            current_board.find(*number);
+            if let Some(last_board) = bingo.clone().find_last_board() {
+                final_board = last_board;
+                final_index = jdx;
+            }
+        }
+    }
+
+    for number in bingo.pool.iter().skip(final_index) {
+        if final_board.find(*number) {
+            println!("Part 2:");
+            println!("Final Board has {}!", number);
+            println!("{}", final_board);
+            println!(
+                "{} x {} = {}",
+                final_board.sum_unmarked(),
+                number,
+                final_board.sum_unmarked() * number
+            );
+            return final_board.sum_unmarked() * number;
+        }
+    }
+
     0
 }
 
