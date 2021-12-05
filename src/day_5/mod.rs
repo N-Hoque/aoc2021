@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, io::Write, path::Path};
 
 use indexmap::IndexMap;
 use itertools::Itertools;
@@ -111,20 +111,21 @@ impl Line {
 
     fn fill_diagonal(start: &Point, end: &Point) -> Vec<Point> {
         let mut points = Vec::new();
-        if start.0 <= end.0 && start.1 <= end.1 {
+
+        if start.0 < end.0 && start.1 < end.1 {
             for (x, y) in ((start.0 + 1)..(end.0)).zip((start.1 + 1)..(end.1)) {
                 points.push(Point(x, y))
             }
         } else if start.0 > end.0 && start.1 > end.1 {
-            for (x, y) in ((end.0 + 1)..(start.0)).zip((end.1 + 1)..(start.1)) {
+            for (x, y) in (((end.0 + 1)..(start.0)).rev()).zip(((end.1 + 1)..(start.1)).rev()) {
                 points.push(Point(x, y))
             }
-        } else if start.0 > end.0 && start.1 <= end.1 {
-            for (x, y) in ((end.0 + 1)..(start.0)).zip((start.1 + 1)..(end.1)) {
+        } else if start.0 > end.0 && start.1 < end.1 {
+            for (x, y) in (((end.0 + 1)..(start.0)).rev()).zip((start.1 + 1)..(end.1)) {
                 points.push(Point(x, y))
             }
-        } else if start.0 <= end.0 && start.1 > end.1 {
-            for (x, y) in ((start.0 + 1)..(end.0)).zip((end.1 + 1)..(start.1)) {
+        } else if start.0 < end.0 && start.1 > end.1 {
+            for (x, y) in ((start.0 + 1)..(end.0)).zip(((end.1 + 1)..(start.1)).rev()) {
                 points.push(Point(x, y))
             }
         }
@@ -204,13 +205,13 @@ impl Map {
         let max_x = all_points
             .iter()
             .max_by(|p1, p2| p1.0.cmp(&p2.0))
-            .expect("Apparently no minimum exists?")
+            .expect("Apparently no maximum exists?")
             .to_owned();
 
         let max_y = all_points
             .iter()
             .max_by(|p1, p2| p1.1.cmp(&p2.1))
-            .expect("Apparently no minimum exists?")
+            .expect("Apparently no maximum exists?")
             .to_owned();
 
         let max = u64::max(max_x.0, max_y.1);
@@ -274,7 +275,7 @@ impl Map {
         Self { lines }
     }
 
-    fn get_straight_intersections(&self) -> IndexMap<Point, u64> {
+    fn get_intersections(&self, with_diagonals: bool) -> IndexMap<Point, u64> {
         let minimum_point = self.find_minimum_bound();
         let maximum_point = self.find_maximum_bound();
 
@@ -282,7 +283,7 @@ impl Map {
 
         for x in minimum_point.0..=maximum_point.0 {
             for y in minimum_point.1..=maximum_point.1 {
-                point_counter.entry(Point(x, y)).or_default();
+                point_counter.entry(Point(y, x)).or_default();
             }
         }
 
@@ -298,18 +299,26 @@ impl Map {
             }
         }
 
+        if with_diagonals {
+            for line in self.get_all_diagonal_lines() {
+                for point in line.get_all_points() {
+                    point_counter.entry(point).and_modify(|x| *x += 1);
+                }
+            }
+        }
+
         point_counter
     }
 
-    pub fn count_straight_intersections(&self) -> usize {
-        let straight_intersections = self.get_straight_intersections();
+    pub fn count_intersections(&self, with_diagonals: bool) -> usize {
+        let straight_intersections = self.get_intersections(with_diagonals);
         straight_intersections
             .iter()
             .filter(|(_, count)| *count >= &2)
             .count()
     }
 
-    pub fn display_straight_intersections(&self) {
+    pub fn write_intersections<P: AsRef<Path>>(&self, out_file: P, with_diagonals: bool) {
         let minimum_point = self.find_minimum_bound();
         let maximum_point = self.find_maximum_bound();
 
@@ -317,7 +326,7 @@ impl Map {
 
         for x in minimum_point.0..=maximum_point.0 {
             for y in minimum_point.1..=maximum_point.1 {
-                point_counter.entry(Point(x, y)).or_default();
+                point_counter.entry(Point(y, x)).or_default();
             }
         }
 
@@ -330,6 +339,14 @@ impl Map {
         for line in self.get_all_vertical_lines() {
             for point in line.get_all_points() {
                 point_counter.entry(point).and_modify(|x| *x += 1);
+            }
+        }
+
+        if with_diagonals {
+            for line in self.get_all_diagonal_lines() {
+                for point in line.get_all_points() {
+                    point_counter.entry(point).and_modify(|x| *x += 1);
+                }
             }
         }
 
@@ -342,12 +359,18 @@ impl Map {
                 output += &count.to_string();
             }
 
-            if point.1 == maximum_point.1 {
+            if point.0 == maximum_point.0 {
                 output += "\n";
             }
         }
 
-        println!("{}", output);
+        let mut output_file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(out_file)
+            .expect("Cannot open file");
+
+        write!(&mut output_file, "{}", output).expect("Cannot write file");
     }
 }
 
@@ -361,7 +384,7 @@ impl Display for Map {
 
         for x in minimum_point.0..=maximum_point.0 {
             for y in minimum_point.1..=maximum_point.1 {
-                point_counter.entry(Point(x, y)).or_default();
+                point_counter.entry(Point(y, x)).or_default();
             }
         }
 
@@ -378,7 +401,7 @@ impl Display for Map {
                 output += &count.to_string();
             }
 
-            if point.1 == maximum_point.1 {
+            if point.0 == maximum_point.0 {
                 output += "\n";
             }
         }
@@ -392,9 +415,9 @@ pub fn solve_sample() -> u64 {
 
     println!("{}", map);
 
-    map.display_straight_intersections();
+    // map.display_straight_intersections();
 
-    let count = map.count_straight_intersections();
+    let count = map.count_intersections(false);
 
     count as u64
 }
@@ -402,17 +425,39 @@ pub fn solve_sample() -> u64 {
 pub fn part_1() -> u64 {
     let map = Map::new();
 
-    map.display_straight_intersections();
+    map.write_intersections("res/day_5_p1_output.txt", false);
 
-    let count = map.count_straight_intersections() as u64;
+    let count = map.count_intersections(false) as u64;
 
     println!("Part 1: {}", count);
 
     count
 }
 
+pub fn solve_sample_2() -> u64 {
+    let map = Map::with_sample();
+
+    println!("{}", map);
+
+    // map.write_straight_intersections("res/day_1_p2_output.txt");
+
+    let count = map.count_intersections(true) as u64;
+
+    // println!("Part 2: {}", count);
+
+    count
+}
+
 pub fn part_2() -> u64 {
-    0
+    let map = Map::new();
+
+    map.write_intersections("res/day_5_p2_output.txt", true);
+
+    let count = map.count_intersections(true) as u64;
+
+    println!("Part 2: {}", count);
+
+    count
 }
 
 #[cfg(test)]
