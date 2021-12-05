@@ -1,4 +1,4 @@
-use std::{fmt::Display, io::Write, path::Path};
+use std::{io::Write, path::Path};
 
 use indexmap::IndexMap;
 use itertools::Itertools;
@@ -318,41 +318,12 @@ impl Map {
             .count()
     }
 
-    pub fn write_intersections<P: AsRef<Path>>(&self, out_file: P, with_diagonals: bool) {
-        let minimum_point = self.find_minimum_bound();
+    fn draw_intersections(&self, with_diagonals: bool) -> String {
         let maximum_point = self.find_maximum_bound();
-
-        let mut point_counter: IndexMap<Point, i64> = IndexMap::new();
-
-        for x in minimum_point.0..=maximum_point.0 {
-            for y in minimum_point.1..=maximum_point.1 {
-                point_counter.entry(Point(y, x)).or_default();
-            }
-        }
-
-        for line in self.get_all_horizontal_lines() {
-            for point in line.get_all_points() {
-                point_counter.entry(point).and_modify(|x| *x += 1);
-            }
-        }
-
-        for line in self.get_all_vertical_lines() {
-            for point in line.get_all_points() {
-                point_counter.entry(point).and_modify(|x| *x += 1);
-            }
-        }
-
-        if with_diagonals {
-            for line in self.get_all_diagonal_lines() {
-                for point in line.get_all_points() {
-                    point_counter.entry(point).and_modify(|x| *x += 1);
-                }
-            }
-        }
 
         let mut output = String::new();
 
-        for (point, count) in point_counter {
+        for (point, count) in self.get_intersections(with_diagonals) {
             if count == 0 {
                 output += ".";
             } else {
@@ -363,6 +334,16 @@ impl Map {
                 output += "\n";
             }
         }
+
+        output
+    }
+
+    pub fn display_intersections(&self, with_diagonals: bool) {
+        println!("{}", self.draw_intersections(with_diagonals));
+    }
+
+    pub fn write_intersections<P: AsRef<Path>>(&self, out_file: P, with_diagonals: bool) {
+        let intersections_string = self.draw_intersections(with_diagonals);
 
         let mut output_file = std::fs::OpenOptions::new()
             .write(true)
@@ -370,52 +351,14 @@ impl Map {
             .open(out_file)
             .expect("Cannot open file");
 
-        write!(&mut output_file, "{}", output).expect("Cannot write file");
-    }
-}
-
-impl Display for Map {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let minimum_point = self.find_minimum_bound();
-        let maximum_point = self.find_maximum_bound();
-        let all_points = self.get_all_points();
-
-        let mut point_counter: IndexMap<Point, i64> = IndexMap::new();
-
-        for x in minimum_point.0..=maximum_point.0 {
-            for y in minimum_point.1..=maximum_point.1 {
-                point_counter.entry(Point(y, x)).or_default();
-            }
-        }
-
-        for point in all_points {
-            point_counter.entry(point).and_modify(|x| *x += 1);
-        }
-
-        let mut output = String::new();
-
-        for (point, count) in point_counter {
-            if count == 0 {
-                output += ".";
-            } else {
-                output += &count.to_string();
-            }
-
-            if point.0 == maximum_point.0 {
-                output += "\n";
-            }
-        }
-
-        write!(f, "{}", output)
+        write!(&mut output_file, "{}", intersections_string).expect("Cannot write file");
     }
 }
 
 pub fn solve_sample() -> u64 {
     let map = Map::with_sample();
 
-    println!("{}", map);
-
-    // map.display_straight_intersections();
+    map.display_intersections(false);
 
     let count = map.count_intersections(false);
 
@@ -437,15 +380,11 @@ pub fn part_1() -> u64 {
 pub fn solve_sample_2() -> u64 {
     let map = Map::with_sample();
 
-    println!("{}", map);
+    map.display_intersections(true);
 
-    // map.write_straight_intersections("res/day_1_p2_output.txt");
+    let count = map.count_intersections(true);
 
-    let count = map.count_intersections(true) as u64;
-
-    // println!("Part 2: {}", count);
-
-    count
+    count as u64
 }
 
 pub fn part_2() -> u64 {
