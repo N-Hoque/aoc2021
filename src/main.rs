@@ -22,6 +22,7 @@ fn main() {
     println!();
 
     println!("Day 5!");
+    day_5::solve_sample(true);
     day_5::part_1();
     day_5::part_2();
     println!();

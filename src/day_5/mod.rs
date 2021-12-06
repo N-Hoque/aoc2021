@@ -6,8 +6,8 @@ pub mod line;
 
 pub mod map;
 
-pub fn solve_sample() -> u64 {
-    let map = Map::with_sample(false);
+pub fn solve_sample(with_diagonals: bool) -> u64 {
+    let map = Map::with_sample(with_diagonals);
 
     map.display_intersections();
 
@@ -26,16 +26,6 @@ pub fn part_1() -> u64 {
     println!("Part 1: {}", count);
 
     count
-}
-
-pub fn solve_sample_2() -> u64 {
-    let map = Map::with_sample(true);
-
-    map.display_intersections();
-
-    let count = map.count_intersections();
-
-    count as u64
 }
 
 pub fn part_2() -> u64 {

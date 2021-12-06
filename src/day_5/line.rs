@@ -14,6 +14,12 @@ pub enum Line {
     Diagonal(LineData),
 }
 
+impl From<(&str, &str)> for Line {
+    fn from(x: (&str, &str)) -> Self {
+        Line::new(Point::from(x.0), Point::from(x.1))
+    }
+}
+
 impl Line {
     pub fn as_points(&self) -> Vec<Point> {
         let mut x = vec![self.get_start()];
