@@ -21,94 +21,59 @@ const SAMPLE_INPUT: [&str; 10] = [
     "5,5 -> 8,2",
 ];
 
-fn find_intersections_with_sample(with_diagonals: bool) -> IndexMap<Point, u64> {
-    let mut point_counter = IndexMap::new();
-
-    for line in SAMPLE_INPUT {
-        let points = into_points_str(line);
-
-        let line = Line::from(points);
-
-        for point in line.as_points() {
-            if !with_diagonals {
-                if let Line::Diagonal(_) = line {
-                    continue;
-                }
-            }
-            point_counter
-                .entry(point)
-                .and_modify(|x| *x += 1)
-                .or_insert(1u64);
-        }
-    }
-
-    point_counter
-}
-
-fn find_intersections(with_diagonals: bool) -> IndexMap<Point, u64> {
-    let file = std::fs::File::open("res/day_5.txt").expect("Cannot open file");
-    let mut file_buffer = std::io::BufReader::new(file);
-    let mut line_buffer = String::new();
-
-    let mut point_counter = IndexMap::new();
-
-    loop {
-        match file_buffer.read_line(&mut line_buffer) {
-            Err(_) | Ok(0) => break,
-            Ok(_) => {
-                let points = into_points_str(&line_buffer);
-
-                let line = Line::from(points);
-
-                for point in line.as_points() {
-                    if !with_diagonals {
-                        if let Line::Diagonal(_) = line {
-                            continue;
-                        }
-                    }
-                    point_counter
-                        .entry(point)
-                        .and_modify(|x| *x += 1)
-                        .or_insert(1u64);
-                }
-            }
-        }
-        line_buffer.clear();
-    }
-
-    point_counter
-}
-
-fn into_points_str(line_buffer: &str) -> (&str, &str) {
-    line_buffer
-        .trim()
-        .split(" -> ")
-        .collect_tuple::<(&str, &str)>()
-        .expect("Cannot split by ->")
-}
-
 pub struct Map {
     point_counter: IndexMap<Point, u64>,
 }
 
 impl Map {
     pub fn new(with_diagonals: bool) -> Self {
+        let mut new_map = BaseMap::init();
+
+        new_map.find_intersections(with_diagonals);
+
         Self {
-            point_counter: find_intersections(with_diagonals),
+            point_counter: new_map.point_counter,
         }
     }
 
     pub fn with_sample(with_diagonals: bool) -> Self {
+        let mut new_map = BaseMap::init();
+
+        new_map.find_intersections_with_sample(with_diagonals);
+
         Self {
-            point_counter: find_intersections_with_sample(with_diagonals),
+            point_counter: new_map.point_counter,
         }
     }
 
-    fn find_minimum_bound(&self) -> Point {
+    pub fn count_intersections(&self) -> usize {
+        self.point_counter
+            .iter()
+            .filter(|(_, count)| *count >= &2)
+            .count()
+    }
+
+    pub fn display_intersections(&self) {
+        println!("{}", self.draw_intersections());
+    }
+
+    pub fn write_intersections<P: AsRef<Path>>(&self, out_file: P) {
+        let intersections_string = self.draw_intersections();
+
+        let mut output_file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(out_file)
+            .expect("Cannot open file");
+
+        write!(&mut output_file, "{}", intersections_string).expect("Cannot write file");
+    }
+
+    fn get_min_bound(&self) -> Point {
         Point(0, 0)
     }
 
-    fn find_maximum_bound(&self) -> Point {
+    fn get_max_bound(&self) -> Point {
         let max_x = self
             .point_counter
             .keys()
@@ -120,7 +85,7 @@ impl Map {
             .point_counter
             .keys()
             .max_by(|p1, p2| p1.1.cmp(&p2.1))
-            .expect("Apparently no maximum exists?")
+            .expect("No maximum found")
             .to_owned();
 
         let max = u64::max(max_x.0, max_y.1);
@@ -128,16 +93,9 @@ impl Map {
         Point(max, max)
     }
 
-    pub fn count_intersections(&self) -> usize {
-        self.point_counter
-            .iter()
-            .filter(|(_, count)| *count >= &2)
-            .count()
-    }
-
     fn draw_intersections(&self) -> String {
-        let minimum_point = self.find_minimum_bound();
-        let maximum_point = self.find_maximum_bound();
+        let minimum_point = self.get_min_bound();
+        let maximum_point = self.get_max_bound();
 
         let mut output = String::new();
 
@@ -156,20 +114,58 @@ impl Map {
 
         output
     }
+}
 
-    pub fn display_intersections(&self) {
-        println!("{}", self.draw_intersections());
+pub struct BaseMap {
+    point_counter: IndexMap<Point, u64>,
+}
+
+impl BaseMap {
+    fn init() -> Self {
+        Self {
+            point_counter: IndexMap::new(),
+        }
     }
 
-    pub fn write_intersections<P: AsRef<Path>>(&self, out_file: P) {
-        let intersections_string = self.draw_intersections();
+    fn update_counter(&mut self, input_str: &str, with_diagonals: bool) {
+        let line = Line::from(
+            input_str
+                .trim()
+                .split(" -> ")
+                .collect_tuple::<(&str, &str)>()
+                .expect("Cannot split by ->"),
+        );
+        let points = line.as_points();
+        if !with_diagonals {
+            if let Line::Diagonal(_) = line {
+                return;
+            }
+        }
+        for point in points {
+            self.point_counter
+                .entry(point)
+                .and_modify(|x| *x += 1)
+                .or_insert(1);
+        }
+    }
 
-        let mut output_file = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(out_file)
-            .expect("Cannot open file");
+    fn find_intersections_with_sample(&mut self, with_diagonals: bool) {
+        for line in SAMPLE_INPUT {
+            self.update_counter(line, with_diagonals);
+        }
+    }
 
-        write!(&mut output_file, "{}", intersections_string).expect("Cannot write file");
+    fn find_intersections(&mut self, with_diagonals: bool) {
+        let file = std::fs::File::open("res/day_5.txt").expect("Cannot open file");
+        let mut file_buffer = std::io::BufReader::new(file);
+        let mut line_buffer = String::new();
+
+        loop {
+            match file_buffer.read_line(&mut line_buffer) {
+                Err(_) | Ok(0) => break,
+                Ok(_) => self.update_counter(&line_buffer, with_diagonals),
+            }
+            line_buffer.clear();
+        }
     }
 }
