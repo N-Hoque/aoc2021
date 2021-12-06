@@ -1,6 +1,16 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Point(pub u64, pub u64);
 
+impl From<(&str, &str)> for Point {
+    fn from((x, y): (&str, &str)) -> Self {
+        match (x.parse(), y.parse()) {
+            (Err(_), _) => panic!("Could not parse left value {}", x),
+            (_, Err(_)) => panic!("Could not parse right value {}", y),
+            (Ok(x), Ok(y)) => Point(x, y),
+        }
+    }
+}
+
 impl std::cmp::PartialOrd for Point {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match self.0.cmp(&other.0) {
