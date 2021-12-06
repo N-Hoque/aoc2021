@@ -1,13 +1,13 @@
 use super::point::Point;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct LineData {
     start: Point,
     end: Point,
     points: Vec<Point>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Line {
     Horizontal(LineData),
     Vertical(LineData),
@@ -15,7 +15,7 @@ pub enum Line {
 }
 
 impl Line {
-    pub fn get_all_points(&self) -> Vec<Point> {
+    pub fn as_points(&self) -> Vec<Point> {
         let mut x = vec![self.get_start()];
         x.extend(self.get_inner_data().points);
         x.push(self.get_end());
