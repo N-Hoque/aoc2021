@@ -21,26 +21,13 @@ const SAMPLE_INPUT: [&str; 10] = [
     "5,5 -> 8,2",
 ];
 
-fn make_line(p1: &str, p2: &str) -> Line {
-    let p1 = into_point(p1);
-    let p2 = into_point(p2);
-    Line::new(p1, p2)
-}
-
-fn into_point(p1: &str) -> Point {
-    p1.split(',')
-        .collect_tuple::<(&str, &str)>()
-        .map(Point::from)
-        .expect("Cannot create point")
-}
-
 fn find_intersections_with_sample(with_diagonals: bool) -> IndexMap<Point, u64> {
     let mut point_counter = IndexMap::new();
 
     for line in SAMPLE_INPUT {
         let points = into_points_str(line);
 
-        let line = make_line(points.0, points.1);
+        let line = Line::from(points);
 
         for point in line.as_points() {
             if !with_diagonals {
@@ -71,7 +58,7 @@ fn find_intersections(with_diagonals: bool) -> IndexMap<Point, u64> {
             Ok(_) => {
                 let points = into_points_str(&line_buffer);
 
-                let line = make_line(points.0, points.1);
+                let line = Line::from(points);
 
                 for point in line.as_points() {
                     if !with_diagonals {
@@ -161,7 +148,7 @@ impl Map {
                 } else {
                     output += ".";
                 }
-                if y == maximum_point.0 {
+                if x == maximum_point.1 {
                     output += "\n";
                 }
             }
