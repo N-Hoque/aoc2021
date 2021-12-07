@@ -7,7 +7,7 @@ pub mod day_6;
 
 use std::{
     fmt::Debug,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Read},
     path::Path,
     str::FromStr,
 };
@@ -32,5 +32,12 @@ where
         .iter()
         .map(|s| s.parse::<T>().expect("Could not parse value"))
         .collect::<Vec<_>>();
+    data
+}
+
+pub fn read_to_string<P: AsRef<Path>>(filename: P) -> String {
+    let mut data = String::new();
+    let mut file = std::fs::File::open(filename).expect("Cannot open file");
+    file.read_to_string(&mut data).expect("Cannot read file");
     data
 }
