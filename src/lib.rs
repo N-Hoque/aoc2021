@@ -4,6 +4,7 @@ pub mod day_3;
 pub mod day_4;
 pub mod day_5;
 pub mod day_6;
+pub mod day_7;
 
 use std::{
     fmt::Debug,
@@ -40,4 +41,17 @@ pub fn read_to_string<P: AsRef<Path>>(filename: P) -> String {
     let mut file = std::fs::File::open(filename).expect("Cannot open file");
     file.read_to_string(&mut data).expect("Cannot read file");
     data
+}
+
+pub fn read_to_vector<T, P>(filename: P) -> Vec<u64>
+where
+    T: FromStr + Debug,
+    <T as FromStr>::Err: std::fmt::Debug,
+    P: AsRef<Path>,
+{
+    read_to_string(filename)
+        .trim()
+        .split(',')
+        .map(|x| x.parse::<u64>().expect("Cannot parse value"))
+        .collect()
 }
