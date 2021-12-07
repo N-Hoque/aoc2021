@@ -1,4 +1,4 @@
-use aoc2021::{day_1, day_2, day_3, day_4, day_5};
+use aoc2021::{day_1, day_2, day_3, day_4, day_5, day_6};
 
 fn main() {
     println!("Day 1!");
@@ -24,5 +24,10 @@ fn main() {
     println!("Day 5!");
     day_5::part_1();
     day_5::part_2();
+    println!();
+
+    println!("Day 6!");
+    day_6::part_1();
+    day_6::part_2();
     println!();
 }
