@@ -1,9 +1,10 @@
-use std::{io::Write, path::Path};
+use std::{
+    io::{BufRead, Write},
+    path::Path,
+};
 
 use indexmap::IndexMap;
 use itertools::Itertools;
-
-use crate::read_lines;
 
 use super::{line::Line, point::Point};
 
@@ -21,201 +22,43 @@ const SAMPLE_INPUT: [&str; 10] = [
 ];
 
 pub struct Map {
-    lines: Vec<Line>,
+    point_counter: IndexMap<Point, u64>,
 }
 
 impl Map {
-    fn get_all_horizontal_lines(&self) -> Vec<Line> {
-        self.lines
-            .iter()
-            .filter(|x| matches!(x, Line::Horizontal(_)))
-            .cloned()
-            .collect()
-    }
+    pub fn new(with_diagonals: bool) -> Self {
+        let mut new_map = BaseMap::init();
 
-    fn get_all_vertical_lines(&self) -> Vec<Line> {
-        self.lines
-            .iter()
-            .filter(|x| matches!(x, Line::Vertical(_)))
-            .cloned()
-            .collect()
-    }
+        new_map.find_intersections(with_diagonals);
 
-    fn get_all_diagonal_lines(&self) -> Vec<Line> {
-        self.lines
-            .iter()
-            .filter(|x| matches!(x, Line::Diagonal(_)))
-            .cloned()
-            .collect()
-    }
-
-    fn get_all_points(&self) -> Vec<Point> {
-        let mut points = vec![];
-
-        for line in self.lines.iter() {
-            points.extend(vec![line.get_start()]);
-            points.extend(line.get_points());
-            points.extend(vec![line.get_end()]);
+        Self {
+            point_counter: new_map.point_counter,
         }
-
-        points
     }
 
-    fn find_minimum_bound(&self) -> Point {
-        let all_points = self.get_all_points();
+    pub fn with_sample(with_diagonals: bool) -> Self {
+        let mut new_map = BaseMap::init();
 
-        all_points
-            .iter()
-            .min()
-            .expect("Apparently no minimum exists?")
-            .to_owned()
-    }
+        new_map.find_intersections_with_sample(with_diagonals);
 
-    fn find_maximum_bound(&self) -> Point {
-        let all_points = self.get_all_points();
-
-        let max_x = all_points
-            .iter()
-            .max_by(|p1, p2| p1.0.cmp(&p2.0))
-            .expect("Apparently no maximum exists?")
-            .to_owned();
-
-        let max_y = all_points
-            .iter()
-            .max_by(|p1, p2| p1.1.cmp(&p2.1))
-            .expect("Apparently no maximum exists?")
-            .to_owned();
-
-        let max = u64::max(max_x.0, max_y.1);
-
-        Point(max, max)
-    }
-
-    fn parse_data(data: Vec<String>) -> Vec<Line> {
-        let data = data
-            .iter()
-            .map(|x| {
-                x.split(" -> ")
-                    .collect_tuple::<(&str, &str)>()
-                    .expect("Cannot split by ->")
-            })
-            .collect::<Vec<_>>();
-
-        let lines = data
-            .iter()
-            .map(|(p1, p2)| {
-                let p1 = p1
-                    .split(',')
-                    .collect_tuple::<(&str, &str)>()
-                    .map(|(x, y)| {
-                        Point(
-                            x.parse().expect("Cannot parse value"),
-                            y.parse().expect("Cannot parse value"),
-                        )
-                    })
-                    .expect("Cannot create point");
-                let p2 = p2
-                    .split(',')
-                    .collect_tuple::<(&str, &str)>()
-                    .map(|(x, y)| {
-                        Point(
-                            x.parse().expect("Cannot parse value"),
-                            y.parse().expect("Cannot parse value"),
-                        )
-                    })
-                    .expect("Cannot create point");
-                Line::new(p1, p2)
-            })
-            .collect();
-
-        lines
-    }
-
-    pub fn with_sample() -> Self {
-        let data = SAMPLE_INPUT.iter().map(|x| x.to_string()).collect();
-
-        let lines = Map::parse_data(data);
-
-        Self { lines }
-    }
-
-    pub fn new() -> Self {
-        let data = read_lines("res/day_5.txt");
-
-        let lines = Map::parse_data(data);
-
-        Self { lines }
-    }
-
-    fn get_intersections(&self, with_diagonals: bool) -> IndexMap<Point, u64> {
-        let minimum_point = self.find_minimum_bound();
-        let maximum_point = self.find_maximum_bound();
-
-        let mut point_counter: IndexMap<Point, u64> = IndexMap::new();
-
-        for x in minimum_point.0..=maximum_point.0 {
-            for y in minimum_point.1..=maximum_point.1 {
-                point_counter.entry(Point(y, x)).or_default();
-            }
+        Self {
+            point_counter: new_map.point_counter,
         }
-
-        for line in self.get_all_horizontal_lines() {
-            for point in line.get_all_points() {
-                point_counter.entry(point).and_modify(|x| *x += 1);
-            }
-        }
-
-        for line in self.get_all_vertical_lines() {
-            for point in line.get_all_points() {
-                point_counter.entry(point).and_modify(|x| *x += 1);
-            }
-        }
-
-        if with_diagonals {
-            for line in self.get_all_diagonal_lines() {
-                for point in line.get_all_points() {
-                    point_counter.entry(point).and_modify(|x| *x += 1);
-                }
-            }
-        }
-
-        point_counter
     }
 
-    pub fn count_intersections(&self, with_diagonals: bool) -> usize {
-        let straight_intersections = self.get_intersections(with_diagonals);
-        straight_intersections
+    pub fn count_intersections(&self) -> usize {
+        self.point_counter
             .iter()
             .filter(|(_, count)| *count >= &2)
             .count()
     }
 
-    fn draw_intersections(&self, with_diagonals: bool) -> String {
-        let maximum_point = self.find_maximum_bound();
-
-        let mut output = String::new();
-
-        for (point, count) in self.get_intersections(with_diagonals) {
-            if count == 0 {
-                output += ".";
-            } else {
-                output += &count.to_string();
-            }
-
-            if point.0 == maximum_point.0 {
-                output += "\n";
-            }
-        }
-
-        output
+    pub fn display_intersections(&self) {
+        println!("{}", self.draw_intersections());
     }
 
-    pub fn display_intersections(&self, with_diagonals: bool) {
-        println!("{}", self.draw_intersections(with_diagonals));
-    }
-
-    pub fn write_intersections<P: AsRef<Path>>(&self, out_file: P, with_diagonals: bool) {
-        let intersections_string = self.draw_intersections(with_diagonals);
+    pub fn write_intersections<P: AsRef<Path>>(&self, out_file: P) {
+        let intersections_string = self.draw_intersections();
 
         let mut output_file = std::fs::OpenOptions::new()
             .write(true)
@@ -224,5 +67,105 @@ impl Map {
             .expect("Cannot open file");
 
         write!(&mut output_file, "{}", intersections_string).expect("Cannot write file");
+    }
+
+    fn get_min_bound(&self) -> Point {
+        Point(0, 0)
+    }
+
+    fn get_max_bound(&self) -> Point {
+        let max_x = self
+            .point_counter
+            .keys()
+            .max_by(|p1, p2| p1.0.cmp(&p2.0))
+            .expect("No maximum found")
+            .to_owned();
+
+        let max_y = self
+            .point_counter
+            .keys()
+            .max_by(|p1, p2| p1.1.cmp(&p2.1))
+            .expect("No maximum found")
+            .to_owned();
+
+        let max = u64::max(max_x.0, max_y.1);
+
+        Point(max, max)
+    }
+
+    fn draw_intersections(&self) -> String {
+        let minimum_point = self.get_min_bound();
+        let maximum_point = self.get_max_bound();
+
+        let mut output = String::new();
+
+        for y in minimum_point.0..=maximum_point.0 {
+            for x in minimum_point.1..=maximum_point.1 {
+                if let Some((_, count)) = self.point_counter.get_key_value(&Point(x, y)) {
+                    output += &count.to_string();
+                } else {
+                    output += ".";
+                }
+                if x == maximum_point.1 {
+                    output += "\n";
+                }
+            }
+        }
+
+        output
+    }
+}
+
+pub struct BaseMap {
+    point_counter: IndexMap<Point, u64>,
+}
+
+impl BaseMap {
+    fn init() -> Self {
+        Self {
+            point_counter: IndexMap::new(),
+        }
+    }
+
+    fn update_counter(&mut self, input_str: &str, with_diagonals: bool) {
+        let line = Line::from(
+            input_str
+                .trim()
+                .split(" -> ")
+                .collect_tuple::<(&str, &str)>()
+                .expect("Cannot split by ->"),
+        );
+        let points = line.as_points();
+        if !with_diagonals {
+            if let Line::Diagonal(_) = line {
+                return;
+            }
+        }
+        for point in points {
+            self.point_counter
+                .entry(point)
+                .and_modify(|x| *x += 1)
+                .or_insert(1);
+        }
+    }
+
+    fn find_intersections_with_sample(&mut self, with_diagonals: bool) {
+        for line in SAMPLE_INPUT {
+            self.update_counter(line, with_diagonals);
+        }
+    }
+
+    fn find_intersections(&mut self, with_diagonals: bool) {
+        let file = std::fs::File::open("res/day_5.txt").expect("Cannot open file");
+        let mut file_buffer = std::io::BufReader::new(file);
+        let mut line_buffer = String::new();
+
+        loop {
+            match file_buffer.read_line(&mut line_buffer) {
+                Err(_) | Ok(0) => break,
+                Ok(_) => self.update_counter(&line_buffer, with_diagonals),
+            }
+            line_buffer.clear();
+        }
     }
 }

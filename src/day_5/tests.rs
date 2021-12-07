@@ -1,6 +1,4 @@
-use crate::day_5::part_2;
-
-use super::{part_1, solve_sample, solve_sample_2};
+use super::{part_1, part_2, solve_sample};
 
 #[cfg(test)]
 mod line {
@@ -225,12 +223,12 @@ mod line {
 
 #[test]
 fn test_solve_sample() {
-    assert_eq!(5, solve_sample());
+    assert_eq!(5, solve_sample(false));
 }
 
 #[test]
 fn test_solve_sample_2() {
-    assert_eq!(12, solve_sample_2());
+    assert_eq!(12, solve_sample(true));
 }
 
 #[test]
