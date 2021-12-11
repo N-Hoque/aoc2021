@@ -7,7 +7,7 @@ fn test_solve_sample() {
 
 #[test]
 fn test_solve_sample_2() {
-    assert_eq!(0, solve_sample_2());
+    assert_eq!(288957, solve_sample_2());
 }
 
 #[test]
@@ -17,5 +17,5 @@ fn test_part_1() {
 
 #[test]
 fn test_part_2() {
-    assert_eq!(0, part_2());
+    assert_eq!(4001832844, part_2());
 }
