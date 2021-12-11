@@ -1,3 +1,7 @@
+use std::collections::VecDeque;
+
+use itertools::Itertools;
+
 use crate::read_to_string;
 
 const SAMPLE_INPUT: &str = "2199943210
@@ -30,8 +34,54 @@ impl std::ops::Sub for Point {
     }
 }
 
-fn calculate_risk(minimal_points: &[Point]) -> u64 {
+fn calculate_risk(heatmap: &[Point]) -> u64 {
+    let minimal_points = find_minimal_points(heatmap);
+
     minimal_points.iter().map(|p| (p.z + 1) as u64).sum()
+}
+
+fn find_basin(heatmap: &[Point], minimal_point: &Point) -> Vec<Point> {
+    let mut explored = vec![*minimal_point];
+
+    let initial_neighbors = find_neighbors(heatmap, minimal_point)
+        .iter()
+        .filter(|p| p.z != 9)
+        .copied()
+        .collect_vec();
+
+    let mut unexplored = VecDeque::from_iter(initial_neighbors.iter().copied());
+
+    while let Some(point_to_search) = unexplored.pop_front() {
+        let new_neighbors = find_neighbors(heatmap, &point_to_search)
+            .iter()
+            .filter(|p| p.z != 9)
+            .copied()
+            .collect_vec();
+        explored.push(point_to_search);
+        for point in new_neighbors {
+            if explored.contains(&point) || unexplored.contains(&point) {
+                continue;
+            }
+            unexplored.push_back(point);
+        }
+    }
+
+    let explored = explored.iter().copied().collect_vec();
+
+    explored
+}
+
+fn find_basins(heatmap: &[Point]) -> Vec<Vec<Point>> {
+    let minimal_points = find_minimal_points(heatmap);
+    let mut basins = Vec::new();
+
+    for point in minimal_points {
+        basins.push(find_basin(heatmap, &point));
+    }
+
+    basins.sort_by_key(|b2| std::cmp::Reverse(b2.len()));
+
+    basins
 }
 
 fn find_minimal_points(heatmap: &[Point]) -> Vec<Point> {
@@ -64,6 +114,16 @@ fn find_neighbors(heatmap: &[Point], from: &Point) -> Vec<Point> {
     neighbors
 }
 
+fn calculate_basin_strength(heatmap: &[Point]) -> u64 {
+    let basins = find_basins(heatmap);
+    let max_basin_size = basins
+        .iter()
+        .take(3)
+        .map(|b| b.len() as u64)
+        .product::<u64>();
+    max_basin_size
+}
+
 fn generate_heatmap(input: &str) -> Vec<Point> {
     let mut points = Vec::new();
 
@@ -82,8 +142,7 @@ fn generate_heatmap(input: &str) -> Vec<Point> {
 
 fn solve_sample() -> u64 {
     let heatmap = generate_heatmap(SAMPLE_INPUT);
-    let minimal_points = find_minimal_points(&heatmap);
-    let risk_level = calculate_risk(&minimal_points);
+    let risk_level = calculate_risk(&heatmap);
 
     println!("Sample 1: {}", risk_level);
 
@@ -91,14 +150,18 @@ fn solve_sample() -> u64 {
 }
 
 fn solve_sample_2() -> u64 {
-    0
+    let heatmap = generate_heatmap(SAMPLE_INPUT);
+    let max_basin_size = calculate_basin_strength(&heatmap);
+
+    println!("Sample 2: {}", max_basin_size);
+
+    max_basin_size
 }
 
 pub fn part_1() -> u64 {
     let data = read_to_string("res/day_9.txt");
     let heatmap = generate_heatmap(&data);
-    let minimal_points = find_minimal_points(&heatmap);
-    let risk_level = calculate_risk(&minimal_points);
+    let risk_level = calculate_risk(&heatmap);
 
     println!("Part 1: {}", risk_level);
 
@@ -106,7 +169,13 @@ pub fn part_1() -> u64 {
 }
 
 pub fn part_2() -> u64 {
-    0
+    let data = read_to_string("res/day_9.txt");
+    let heatmap = generate_heatmap(&data);
+    let max_basin_size = calculate_basin_strength(&heatmap);
+
+    println!("Part 2: {}", max_basin_size);
+
+    max_basin_size
 }
 
 #[cfg(test)]
